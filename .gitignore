@@ -40,3 +40,4 @@ log.log
 db.sqlite3
 test.py
 *.log
+service_account.json
