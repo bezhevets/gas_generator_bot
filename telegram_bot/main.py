@@ -3,6 +3,7 @@ from datetime import datetime
 
 import telebot
 from dotenv import load_dotenv
+from telebot import types
 
 load_dotenv()
 
@@ -40,8 +41,12 @@ def format_gen_message(action: str) -> str:
 
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("Допомога")
+    markup.add(btn1)
+
     name = get_display_name(message)
-    bot.send_message(message.chat.id, f"Привіт, {name}!\n\n{HELP_TEXT}")
+    bot.send_message(message.chat.id, f"Привіт, {name}!\n\n{HELP_TEXT}", reply_markup=markup)
 
 
 @bot.message_handler(commands=["help"])
@@ -69,22 +74,34 @@ def stop_generator(message):
 
 
 @bot.message_handler(commands=["stat"])
-def stop_generator(message):
+def stat(message):
     # TODO: stats
+    remaining = 3  # скільки мотогодин залишилось
+    bar_total = 10  # скільки "клітинок" у барі (довжина)
+    interval = 50  # інтервал заміни в мотогодинах
+    used = interval - remaining
+    filled = round((used / interval) * bar_total)
+    bar = "🟫" * filled + "⬜️" * (bar_total - filled)
+
     msg = (
-        "📊 **Статистика генератора**\n\n"
-        "⏱️ **Мотогодин:** 40 год.\n"
-        f"🛢️ **Остання заміна мастила:** {datetime.now().strftime('%d.%m.%Y')}\n"
-        "🧰 **Наступна заміна:** через 14 мотогодин\n\n"
-        f"🚀 **Останній запуск:** {datetime.now().strftime('%d.%m.%Y %H:%M')}\n"
-        "🔁 **Усього запусків:** 5\n"
+        "📊 *Статистика генератора*\n\n"
+        "🧰 *Заміна мастила*\n"
+        f"{bar}\n"
+        f"Залишилось: *{remaining}* мотогодин\n\n"
+        "⏱️ *Всього мотогодин:* 40 год.\n"
+        f"🛢️ *Остання заміна:* {datetime.now().strftime('%d.%m.%Y')}\n"
+        f"🚀 *Останній запуск:* {datetime.now().strftime('%d.%m.%Y %H:%M')}\n"
+        "🔁 *Усього запусків:* 5\n"
     )
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
 
 @bot.message_handler(func=lambda m: True, content_types=["text"])
 def fallback(message):
-    bot.reply_to(message, "Вибач, я не маю відповіді на твою команду.\nЯ розумію лише команди.\n\n" + HELP_TEXT)
+    if message.text == "Допомога":
+        bot.send_message(message.chat.id, HELP_TEXT)
+    else:
+        bot.reply_to(message, "Вибач, я не маю відповіді на твою команду.\nЯ розумію лише команди.\n\n" + HELP_TEXT)
 
 
 bot.infinity_polling()
