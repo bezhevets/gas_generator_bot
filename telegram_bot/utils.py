@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -34,5 +34,33 @@ def write_start_time(time_now: datetime) -> bool:
     return True
 
 
-if __name__ == "__main__":
-    write_start_time()
+def moto_hours(data: dict):
+    start = data.get("Час запуску")
+    stop = data.get("Час стопу")
+    if not start or not stop:
+        return ""
+
+    start = datetime.strptime(start, "%d.%m.%Y %H:%M")
+    stop = datetime.strptime(stop, "%d.%m.%Y %H:%M")
+
+    if stop < start:  # перехід через північ
+        stop += timedelta(days=1)
+
+    delta = stop - start
+    total_minutes = int(delta.total_seconds() // 60)
+    h, m = divmod(total_minutes, 60)
+    return f"{h}:{m:02d}"
+
+
+def write_stop_time(time_now: datetime) -> bool:
+    # TODO: refactor
+    workbook = read_google_sheet(GOOGLE_SHEET)
+    worksheet = workbook.worksheet(STAT)
+    records = worksheet.get_all_records()
+    last_row = records[-1]
+    if not last_row["Час стопу"]:
+        last_row["Час стопу"] = time_now.strftime("%d.%m.%Y %H:%M")
+        last_row["Мото години"] = moto_hours(last_row)
+
+    upload_dataframe_to_worksheet(worksheet, pd.DataFrame(records))
+    return True

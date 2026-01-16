@@ -5,7 +5,7 @@ import telebot
 from dotenv import load_dotenv
 from telebot import types
 
-from celery_tasks import start_generator_task
+from celery_tasks import start_generator_task, stop_generator_task
 
 load_dotenv()
 
@@ -71,8 +71,8 @@ def start_generator(message):
 
 @bot.message_handler(commands=["stop_generator"])
 def stop_generator(message):
-    # TODO: Google Sheets
     time_now = datetime.now()
+    stop_generator_task.delay(time_now)
     msg = format_gen_message("stop", time_now)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 

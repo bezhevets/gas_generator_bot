@@ -4,7 +4,7 @@ from datetime import datetime
 from celery import Celery
 from dotenv import load_dotenv
 
-from telegram_bot.utils import write_start_time
+from telegram_bot.utils import write_start_time, write_stop_time
 
 load_dotenv()
 
@@ -14,3 +14,8 @@ app = Celery("celery_tasks", broker=os.getenv("CELERY_BROKER_URL"), backend=os.g
 @app.task(name="start_generator")
 def start_generator_task(start_time: datetime):
     return write_start_time(start_time)
+
+
+@app.task(name="stop_generator")
+def stop_generator_task(stop_time: datetime):
+    return write_stop_time(stop_time)
