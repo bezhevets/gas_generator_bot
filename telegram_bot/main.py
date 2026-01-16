@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime
 
@@ -16,6 +17,7 @@ HELP_TEXT = (
     "/start - привітання\n"
     "/help - список команд\n"
     "/ping - перевірка\n"
+    "/info - інфо\n"
     "\n"
     "/start_generator - фіксація часу запуску генератора\n"
     "/stop_generator - фіксація часу зупинки генератора\n"
@@ -84,6 +86,23 @@ def oil_change_time(message):
     change_oil_task.delay(date_today)
     msg = f"✅ **Дату заміни мастила зафіксовано**\n📆 Дата: {date_today.strftime('%d.%m.%Y')}"
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
+
+
+@bot.message_handler(commands=["info"])
+def info(message):
+    contacts = json.loads(os.getenv("CONTACTS_JSON"))
+    c_text = ""
+    if contacts:
+        c_text += f"*📞Контакти:*\n"
+        for contact in contacts:
+            for k, v in contact.items():
+                c_text += f"*{k}:* {v}\n"
+            c_text += "\n"
+        c_text += "\n"
+    table = os.getenv("GOOGLE_SHEET")
+    if table:
+        c_text += f"*Таблиця записів*:\n🔗[Відкрити таблицю ->]({table})\n"
+    bot.send_message(message.chat.id, c_text, parse_mode="Markdown")
 
 
 @bot.message_handler(commands=["stat"])
