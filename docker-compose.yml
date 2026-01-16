@@ -10,10 +10,16 @@ services:
 
   bot:
     build: .
+    container_name: gasgen_bot
+    command: >-
+      watchmedo auto-restart
+      --directory=/app
+      --pattern="*.py"
+      --recursive
+      --signal=SIGINT --
+      python telegram_bot/main.py
     volumes:
       - ./:/app
-    container_name: gasgen_bot
-    command: python telegram_bot/main.py
     depends_on:
       - redis
     env_file:
@@ -27,11 +33,19 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: gasgen_celery
-    command: celery -A celery_tasks worker -n gbot --loglevel=info
+    command: >-
+      watchmedo auto-restart
+      --directory=/app
+      --pattern="*.py"
+      --recursive
+      --signal=SIGINT --
+      celery -A celery_tasks worker -n gbot --loglevel=info
     env_file:
       - .env
     environment:
       TZ: Europe/Kyiv
+    volumes:
+      - ./:/app
     depends_on:
       - bot
       - redis
