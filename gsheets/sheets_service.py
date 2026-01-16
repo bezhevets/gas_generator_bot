@@ -60,7 +60,7 @@ def ensure_headers(worksheet: gspread.Worksheet, columns: list[str]) -> None:
     except gspread.exceptions.APIError:
         current = []
 
-    # Update only if different or empty
+    # Update only if empty
     if not current:
         worksheet.update("1:1", [columns])
 

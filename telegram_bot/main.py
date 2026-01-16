@@ -3,14 +3,10 @@ import os
 from datetime import datetime
 
 import telebot
-from dotenv import load_dotenv
 from telebot import types
 
-from celery_tasks import start_generator_task, stop_generator_task, change_oil_task
-
-load_dotenv()
-
-bot = telebot.TeleBot(os.getenv("TG_TOKEN"))
+from celery_tasks import start_generator_task, stop_generator_task, change_oil_task, statistics_task
+from telegram_bot.bot_instance import bot
 
 HELP_TEXT = (
     "Доступні команди:\n"
@@ -107,24 +103,8 @@ def info(message):
 
 @bot.message_handler(commands=["stat"])
 def stat(message):
-    # TODO: stats
-    remaining = 3  # скільки мотогодин залишилось
-    bar_total = 10  # скільки "клітинок" у барі (довжина)
-    interval = 50  # інтервал заміни в мотогодинах
-    used = interval - remaining
-    filled = round((used / interval) * bar_total)
-    bar = "🟫" * filled + "⬜️" * (bar_total - filled)
-
-    msg = (
-        "📊 *Статистика генератора*\n\n"
-        "🧰 *Заміна мастила*\n"
-        f"{bar}\n"
-        f"Залишилось: *{remaining}* мотогодин\n\n"
-        "⏱️ *Всього мотогодин:* 40 год.\n"
-        f"🛢️ *Остання заміна:* {datetime.now().strftime('%d.%m.%Y')}\n"
-        f"🚀 *Останній запуск:* {datetime.now().strftime('%d.%m.%Y %H:%M')}\n"
-        "🔁 *Усього запусків:* 5\n"
-    )
+    msg = "Збираю дані з таблиці, протягом 1-2 хв я надішлю статистику."
+    statistics_task.delay(message.chat.id)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
 
@@ -136,4 +116,5 @@ def fallback(message):
         bot.reply_to(message, "Вибач, я не маю відповіді на твою команду.\nЯ розумію лише команди.\n\n" + HELP_TEXT)
 
 
-bot.infinity_polling()
+if __name__ == "__main__":
+    bot.infinity_polling()

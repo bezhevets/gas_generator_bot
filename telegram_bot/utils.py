@@ -68,12 +68,12 @@ def moto_hours(data: dict):
     return f"{h}:{m:02d}"
 
 
+def hm_to_minutes(hm: str) -> int:
+    h, m = hm.strip().split(":")[:2]
+    return int(h) * 60 + int(m)
+
+
 def remaining_motor_hours(moto_hm: str, remaining_hours: str):
-
-    def hm_to_minutes(hm: str) -> int:
-        h, m = hm.strip().split(":")[:2]
-        return int(h) * 60 + int(m)
-
     new_remaining_minutes = hm_to_minutes(remaining_hours) - hm_to_minutes(moto_hm)
     total_minutes = max(0, new_remaining_minutes)
     h, m = divmod(total_minutes, 60)
@@ -81,7 +81,6 @@ def remaining_motor_hours(moto_hm: str, remaining_hours: str):
 
 
 def write_stop_time(time_now: datetime) -> bool:
-    # TODO: refactor
     workbook = read_google_sheet(GOOGLE_SHEET)
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
 
@@ -127,3 +126,38 @@ def log_oil_change_time(today: datetime):
 
     df = pd.DataFrame(records)
     upload_dataframe_to_worksheet(worksheet, df)
+
+
+def get_statistic(chat_id: int):
+    from telegram_bot.bot_instance import bot
+
+    workbook = read_google_sheet(GOOGLE_SHEET)
+    worksheet_to = get_or_create_worksheet_with_headers(workbook, TO, SHEETS.get(TO))
+    records_to = worksheet_to.get_all_records()
+    last_row_to = records_to[-1]
+
+    worksheet_stat = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
+    records_stat = worksheet_stat.get_all_records()
+    last_row_stat = records_stat[-1]
+
+    total_moto_hours = sum([hm_to_minutes(i["Мото години"]) for i in records_stat if i["Мото години"]])
+
+    remaining = last_row_to["Залишок мотогодин"]  # скільки мотогодин залишилось
+    bar_total = 10  # скільки "клітинок" у барі (довжина)
+    interval = int(os.getenv("OIL_INTERVAL"))  # інтервал заміни в мотогодинах
+    used = interval - int(remaining.strip().split(":")[0])
+    filled = round((used / interval) * bar_total)
+    bar = "🟫" * filled + "⬜️" * (bar_total - filled)
+
+    msg = (
+        "📊 *Статистика генератора*\n\n"
+        "🧰 *Заміна мастила*\n"
+        f"{bar}\n"
+        f"Залишилось: *{remaining}* мотогодин\n\n"
+        f"🛢️ *Остання заміна масла:* {last_row_to['Дата']}\n"
+        f"🛢️ *Всього замін масла:* {len(records_to)}\n\n"
+        f"🚀 *Останній запуск:* {last_row_stat['Час запуску']}\n"
+        f"🔁 *Усього запусків:* {len(records_stat)}\n"
+        f"⏱️ *Всього мотогодин:* {total_moto_hours // 60} год.\n"
+    )
+    bot.send_message(chat_id, msg, parse_mode="Markdown")

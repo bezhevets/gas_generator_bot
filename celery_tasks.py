@@ -4,7 +4,7 @@ from datetime import datetime
 from celery import Celery
 from dotenv import load_dotenv
 
-from telegram_bot.utils import write_start_time, write_stop_time, log_oil_change_time
+from telegram_bot.utils import write_start_time, write_stop_time, log_oil_change_time, get_statistic
 
 load_dotenv()
 
@@ -24,3 +24,8 @@ def stop_generator_task(stop_time: datetime):
 @app.task(name="change_oil")
 def change_oil_task(stop_time: datetime):
     return log_oil_change_time(stop_time)
+
+
+@app.task(name="statistics")
+def statistics_task(chat_id):
+    return get_statistic(chat_id)
