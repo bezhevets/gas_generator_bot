@@ -5,6 +5,8 @@ import gspread
 import gspread_dataframe
 import pandas as pd
 
+from gsheets.schema import SHEETS
+
 ROOT_FOLDER = Path(__file__).parent
 
 GOOGLE_SERVICE_ACCOUNT = Path(ROOT_FOLDER, "service_account.json")
@@ -44,4 +46,40 @@ def upload_dataframe_to_worksheet(worksheet: gspread.Worksheet, dataframe: pd.Da
         except gspread.exceptions.APIError as error:
             # logger.exception(f"Error in upload_dataframe_to_worksheet: {error}")
             time.sleep(6.1)
+    return worksheet
+
+
+def ensure_headers(worksheet: gspread.Worksheet, columns: list[str]) -> None:
+    """Ensure the first row contains the desired header columns and is formatted.
+
+    Safe to call multiple times. If headers differ, updates row 1 with the schema
+    column order. Also freezes the top row and makes it bold.
+    """
+    try:
+        current = worksheet.row_values(1)
+    except gspread.exceptions.APIError:
+        current = []
+
+    # Update only if different or empty
+    if not current:
+        worksheet.update("1:1", [columns])
+
+    # Freeze the header row and make it bold
+    try:
+        worksheet.freeze(rows=1)
+    except Exception:
+        pass
+    try:
+        worksheet.format("1", {"textFormat": {"bold": True}})
+    except Exception:
+        pass
+
+
+def get_or_create_worksheet_with_headers(
+    workbook: gspread.Spreadsheet, sheet_name: str, columns: list[str] | None = None
+) -> gspread.Worksheet:
+    worksheet = get_or_create_worksheet(workbook, sheet_name)
+    cols = columns or SHEETS.get(sheet_name)
+    if cols:
+        ensure_headers(worksheet, cols)
     return worksheet
