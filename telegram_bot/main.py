@@ -5,7 +5,7 @@ import telebot
 from dotenv import load_dotenv
 from telebot import types
 
-from celery_tasks import start_generator_task, stop_generator_task
+from celery_tasks import start_generator_task, stop_generator_task, change_oil_task
 
 load_dotenv()
 
@@ -19,6 +19,7 @@ HELP_TEXT = (
     "\n"
     "/start_generator - фіксація часу запуску генератора\n"
     "/stop_generator - фіксація часу зупинки генератора\n"
+    "/change_oil - фіксація дати заміни мастила\n"
     "/stat - статистика\n"
 )
 
@@ -74,6 +75,14 @@ def stop_generator(message):
     time_now = datetime.now()
     stop_generator_task.delay(time_now)
     msg = format_gen_message("stop", time_now)
+    bot.send_message(message.chat.id, msg, parse_mode="Markdown")
+
+
+@bot.message_handler(commands=["change_oil"])
+def oil_change_time(message):
+    date_today = datetime.now()
+    change_oil_task.delay(date_today)
+    msg = f"✅ **Дату заміни мастила зафіксовано**\n📆 Дата: {date_today.strftime('%d.%m.%Y')}"
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
 
