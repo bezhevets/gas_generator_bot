@@ -5,6 +5,8 @@ import telebot
 from dotenv import load_dotenv
 from telebot import types
 
+from celery_tasks import start_generator_task
+
 load_dotenv()
 
 bot = telebot.TeleBot(os.getenv("TG_TOKEN"))
@@ -30,8 +32,8 @@ def get_display_name(message: telebot.types.Message) -> str:
     return "друг"
 
 
-def format_gen_message(action: str) -> str:
-    time_str = datetime.now().strftime("%H:%M")
+def format_gen_message(action: str, time_now: datetime) -> str:
+    time_str = time_now.strftime("%H:%M")
     if action == "start":
         return f"✅ **Генератор запущено**\n🕒 Час: {time_str}"
     if action == "stop":
@@ -61,15 +63,17 @@ def ping(message):
 
 @bot.message_handler(commands=["start_generator"])
 def start_generator(message):
-    # TODO: Google Sheets
-    msg = format_gen_message("start")
+    time_now = datetime.now()
+    start_generator_task.delay(time_now)
+    msg = format_gen_message("start", time_now)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
 
 @bot.message_handler(commands=["stop_generator"])
 def stop_generator(message):
     # TODO: Google Sheets
-    msg = format_gen_message("stop")
+    time_now = datetime.now()
+    msg = format_gen_message("stop", time_now)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
 
