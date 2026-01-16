@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: gasgen_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  bot:
+    build: .
+    volumes:
+      - ./:/app
+    container_name: gasgen_bot
+    command: python telegram_bot/main.py
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    environment:
+      TZ: Europe/Kyiv
+    restart: on-failure
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gasgen_celery
+    command: celery -A celery_tasks worker -n gbot --loglevel=info
+    env_file:
+      - .env
+    environment:
+      TZ: Europe/Kyiv
+    depends_on:
+      - bot
+      - redis
+    restart: on-failure
