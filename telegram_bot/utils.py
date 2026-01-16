@@ -20,7 +20,6 @@ TO = "Течнічне обслуговування"
 
 
 def write_start_time(time_now: datetime) -> bool:
-    # TODO: refactor
     workbook = read_google_sheet(GOOGLE_SHEET)
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
 
@@ -28,9 +27,6 @@ def write_start_time(time_now: datetime) -> bool:
     columns = SHEETS.get(STAT, [])
 
     records = worksheet.get_all_records()
-    print(records)
-    print(columns)
-
     if records:
         last_row = records[-1]
         # If last row already has start time filled -> add a new row for a new start
@@ -51,15 +47,7 @@ def write_start_time(time_now: datetime) -> bool:
         records.append(new_row)
 
     df = pd.DataFrame(records)
-    # if columns:
-    #     # Reorder and include any missing schema columns
-    #     for col in columns:
-    #         if col not in df.columns:
-    #             df[col] = ""
-    #     df = df.reindex(columns=columns)
-
     upload_dataframe_to_worksheet(worksheet, df)
-    return True
 
 
 def moto_hours(data: dict):
@@ -97,8 +85,6 @@ def write_stop_time(time_now: datetime) -> bool:
     workbook = read_google_sheet(GOOGLE_SHEET)
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
 
-    # columns = SHEETS.get(STAT, [])
-
     records = worksheet.get_all_records()
     if records:
         last_row = records[-1]
@@ -122,14 +108,7 @@ def write_stop_time(time_now: datetime) -> bool:
                 print(f"Error get remaining_motor_hours: {e}")
 
     df = pd.DataFrame(records)
-    # if columns:
-    #     for col in columns:
-    #         if col not in df.columns:
-    #             df[col] = ""
-    #     df = df.reindex(columns=columns)
-
     upload_dataframe_to_worksheet(worksheet, df)
-    return True
 
 
 def log_oil_change_time(today: datetime):
@@ -138,11 +117,13 @@ def log_oil_change_time(today: datetime):
     records = worksheet.get_all_records()
 
     columns = SHEETS.get(TO, [])
+
     oil_interval = os.getenv("OIL_INTERVAL")
     new_row = {col: "" for col in columns}
     new_row["Дата"] = today.strftime("%d.%m.%Y")
     new_row["Інтервал заміни"] = oil_interval
     new_row["Залишок мотогодин"] = f"{oil_interval}:00"
     records.append(new_row)
+
     df = pd.DataFrame(records)
     upload_dataframe_to_worksheet(worksheet, df)
