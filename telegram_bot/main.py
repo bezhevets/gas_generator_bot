@@ -7,6 +7,7 @@ from telebot import types
 
 from celery_tasks import start_generator_task, stop_generator_task, change_oil_task, statistics_task
 from telegram_bot.bot_instance import bot
+from telegram_bot.permissions import require_role
 
 HELP_TEXT = (
     "Доступні команди:\n"
@@ -15,11 +16,18 @@ HELP_TEXT = (
     "/ping - перевірка\n"
     "/info - інфо\n"
     "\n"
+    "/myid - дізнатись свій user_id\n"
+    "\n"
     "/start_generator - фіксація часу запуску генератора\n"
     "/stop_generator - фіксація часу зупинки генератора\n"
     "/change_oil - фіксація дати заміни мастила\n"
     "/stat - статистика\n"
 )
+
+
+@bot.message_handler(commands=["myid"])
+def myid(message):
+    bot.reply_to(message, f"Ваш user_id: {message.from_user.id}")
 
 
 def get_display_name(message: telebot.types.Message) -> str:
@@ -64,6 +72,7 @@ def ping(message):
 
 
 @bot.message_handler(commands=["start_generator"])
+@require_role("operator")
 def start_generator(message):
     time_now = datetime.now()
     start_generator_task.delay(time_now)
@@ -72,6 +81,7 @@ def start_generator(message):
 
 
 @bot.message_handler(commands=["stop_generator"])
+@require_role("operator")
 def stop_generator(message):
     time_now = datetime.now()
     stop_generator_task.delay(time_now)
@@ -80,6 +90,7 @@ def stop_generator(message):
 
 
 @bot.message_handler(commands=["change_oil"])
+@require_role("operator")
 def oil_change_time(message):
     date_today = datetime.now()
     change_oil_task.delay(date_today)
@@ -114,7 +125,7 @@ def stat(message):
 @bot.message_handler(func=lambda m: True, content_types=["text"])
 def fallback(message):
     if message.text == "Допомога":
-        bot.send_message(message.chat.id, HELP_TEXT)
+        send_help(message)
     elif message.text == "🟢START":
         start_generator(message)
     elif message.text == "🔴STOP":
