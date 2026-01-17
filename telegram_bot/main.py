@@ -16,21 +16,6 @@ from telegram_bot.permissions import (
     ROLE_LEVEL,
 )
 
-HELP_TEXT = (
-    "Доступні команди:\n"
-    "/start - привітання\n"
-    "/help - список команд\n"
-    "/ping - перевірка\n"
-    "/info - інфо\n"
-    "\n"
-    "/myid - дізнатись свій user_id\n"
-    "\n"
-    "/start_generator - фіксація часу запуску генератора\n"
-    "/stop_generator - фіксація часу зупинки генератора\n"
-    "/change_oil - фіксація дати заміни мастила\n"
-    "/stat - статистика\n"
-)
-
 
 @bot.message_handler(commands=["myid"])
 def myid(message):
@@ -53,6 +38,38 @@ def format_gen_message(action: str, time_now: datetime) -> str:
     if action == "stop":
         return f"🛑 **Генератор зупинено**\n🕒 Час: {time_str}"
     return f"ℹ️ Подія генератора\n🕒 Час: {time_str}"
+
+
+def get_help_text(message):
+    help_text = [
+        "Доступні команди:\n",
+        "/start - привітання\n",
+        "/help - список команд\n",
+        "/ping - перевірка\n",
+        "/info - інфо(контакти, таблиця)\n\n",
+        "/myid - дізнатись свій user_id\n\n",
+        "/stat - статистика по генератору\n",
+    ]
+    user_id = message.from_user.id
+    role = get_role_by_user_id(user_id)
+    if ROLE_LEVEL[role] >= ROLE_LEVEL["operator"]:
+        help_text.extend(
+            [
+                "\nКерування:\n",
+                "/start_generator - фіксація часу запуску генератора\n",
+                "/stop_generator - фіксація часу зупинки генератора\n",
+                "/change_oil - фіксація дати заміни мастила\n",
+            ]
+        )
+        if role == "admin":
+            help_text.extend(
+                [
+                    "\nАдмін команди:\n",
+                    "/grant - назначити роль юзеру",
+                ]
+            )
+
+    return "".join(help_text)
 
 
 @bot.message_handler(commands=["start"])
@@ -78,12 +95,12 @@ def send_welcome(message):
         data[str(user_id)] = {"role": role, "name": name}
         save_roles(data)
 
-    bot.send_message(message.chat.id, f"Привіт, {name}!\n\n{HELP_TEXT}", reply_markup=markup)
+    bot.send_message(message.chat.id, f"Привіт, {name}!\n\n{get_help_text(message)}", reply_markup=markup)
 
 
 @bot.message_handler(commands=["help"])
 def send_help(message):
-    bot.send_message(message.chat.id, HELP_TEXT)
+    bot.send_message(message.chat.id, get_help_text(message))
 
 
 @bot.message_handler(commands=["ping"])
@@ -175,7 +192,9 @@ def fallback(message):
     elif message.text == "🔴STOP":
         stop_generator(message)
     else:
-        bot.reply_to(message, "Вибач, я не маю відповіді на твою команду.\nЯ розумію лише команди.\n\n" + HELP_TEXT)
+        bot.reply_to(
+            message, "Вибач, я не маю відповіді на твою команду.\nЯ розумію лише команди.\n\n" + get_help_text(message)
+        )
 
 
 if __name__ == "__main__":
