@@ -7,7 +7,7 @@ from telebot import types
 
 from celery_tasks import start_generator_task, stop_generator_task, change_oil_task, statistics_task
 from telegram_bot.bot_instance import bot
-from telegram_bot.permissions import require_role
+from telegram_bot.permissions import require_role, VALID_ROLES, load_roles, save_roles
 
 HELP_TEXT = (
     "Доступні команди:\n"
@@ -120,6 +120,30 @@ def stat(message):
     msg = "Збираю дані з таблиці, протягом 1-2 хв я надішлю статистику."
     statistics_task.delay(message.chat.id)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
+
+
+@bot.message_handler(commands=["grant"])
+@require_role("admin")
+def grant_role(message):
+    parts = (message.text or "").split()
+
+    if len(parts) != 4 or not parts[1].isdigit():
+        bot.reply_to(
+            message, f"Використання:\n/grant <user_id> <name> <role>\n Доступні ролі: {', '.join(sorted(VALID_ROLES))}"
+        )
+        return
+
+    target_id = int(parts[1])
+    name = parts[2].strip().capitalize()
+    role = parts[3].strip().lower()
+    if role not in VALID_ROLES:
+        bot.reply_to(message, f"Невідома роль. Доступні: {', '.join(sorted(VALID_ROLES))}")
+        return
+
+    data = load_roles()
+    data[str(target_id)] = {"role": role, "name": name}
+    save_roles(data)
+    bot.reply_to(message, f"✅ Роль для {target_id}/{name} встановлено: {role}")
 
 
 @bot.message_handler(func=lambda m: True, content_types=["text"])
