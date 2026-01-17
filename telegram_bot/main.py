@@ -67,6 +67,7 @@ def get_help_text(message):
                 [
                     "\nАдмін команди:\n",
                     "/users - cписок юзерів\n",
+                    "/revoke - понизити роль до `viewer`\n",
                     "/grant - назначити роль юзеру",
                 ]
             )
@@ -211,6 +212,31 @@ def list_users(message):
         )
         return
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
+
+
+@bot.message_handler(commands=["revoke"])
+@require_role("admin")
+def revoke_role(message):
+    parts = (message.text or "").split()
+
+    if len(parts) != 2 or not parts[1].isdigit():
+        bot.reply_to(message, "Використання:\n/revoke <user_id>")
+        return
+    target_id = int(parts[1])
+
+    data = load_roles()
+    user = data.get(str(target_id))
+    if user:
+        user_role = user.get("role")
+        if user_role != "viewer":
+            user["role"] = "viewer"
+            save_roles(data)
+            bot.reply_to(message, f"✅ Доступ для {target_id} скинуто до viewer")
+            return
+        else:
+            bot.reply_to(message, f"ℹ️ Для {target_id} і так задано роль (viewer)")
+            return
+    bot.reply_to(message, f"ℹ️ Користувача з {target_id} не знайдено.")
 
 
 @bot.message_handler(func=lambda m: True, content_types=["text"])
