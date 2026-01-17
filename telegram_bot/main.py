@@ -7,7 +7,7 @@ from telebot import types
 
 from celery_tasks import start_generator_task, stop_generator_task, change_oil_task, statistics_task
 from telegram_bot.bot_instance import bot
-from telegram_bot.permissions import require_role, VALID_ROLES, load_roles, save_roles
+from telegram_bot.permissions import require_role, VALID_ROLES, load_roles, save_roles, ADMIN_ID
 
 HELP_TEXT = (
     "Доступні команди:\n"
@@ -51,13 +51,21 @@ def format_gen_message(action: str, time_now: datetime) -> str:
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn1 = types.KeyboardButton("Допомога")
-    btn2 = types.KeyboardButton("🟢START")
-    btn3 = types.KeyboardButton("🔴STOP")
-    markup.add(btn2, btn3)
-    markup.add(btn1)
+    btn_help = types.KeyboardButton("Допомога")
+    btn_start = types.KeyboardButton("🟢START")
+    btn_stop = types.KeyboardButton("🔴STOP")
+    markup.add(btn_start, btn_stop)
+    markup.add(btn_help)
 
     name = get_display_name(message)
+
+    data = load_roles()
+    user_id = str(message.from_user.id)
+    user = data.get(user_id)
+    if user_id != str(ADMIN_ID) and not user:
+        data[str(message.from_user.id)] = {"role": "viewer", "name": name}
+        save_roles(data)
+
     bot.send_message(message.chat.id, f"Привіт, {name}!\n\n{HELP_TEXT}", reply_markup=markup)
 
 
