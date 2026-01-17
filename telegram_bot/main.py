@@ -44,6 +44,9 @@ def format_gen_message(action: str, time_now: datetime) -> str:
 def send_welcome(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("Допомога")
+    btn2 = types.KeyboardButton("🟢START")
+    btn3 = types.KeyboardButton("🔴STOP")
+    markup.add(btn2, btn3)
     markup.add(btn1)
 
     name = get_display_name(message)
@@ -112,6 +115,10 @@ def stat(message):
 def fallback(message):
     if message.text == "Допомога":
         bot.send_message(message.chat.id, HELP_TEXT)
+    elif message.text == "🟢START":
+        start_generator(message)
+    elif message.text == "🔴STOP":
+        stop_generator(message)
     else:
         bot.reply_to(message, "Вибач, я не маю відповіді на твою команду.\nЯ розумію лише команди.\n\n" + HELP_TEXT)
 
