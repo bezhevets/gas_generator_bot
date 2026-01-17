@@ -8,7 +8,7 @@ from telegram_bot.utils import write_start_time, write_stop_time, log_oil_change
 
 load_dotenv()
 
-app = Celery("celery_tasks", broker=os.getenv("CELERY_BROKER_URL"), backend=os.getenv("СELERY_RESULT_BACKEND"))
+app = Celery("celery_tasks", broker=os.getenv("CELERY_BROKER_URL"), backend=os.getenv("CELERY_RESULT_BACKEND"))
 
 
 @app.task(name="start_generator")
