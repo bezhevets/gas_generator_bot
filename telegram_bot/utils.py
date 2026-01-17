@@ -90,7 +90,7 @@ def write_stop_time(time_now: datetime) -> bool:
         if not last_row.get("Час стопу"):
             last_row["Час стопу"] = time_now.strftime("%d.%m.%Y %H:%M")
             moto_h = moto_hours(last_row)
-            last_row["Мото години"] = moto_h
+            last_row["Мотогодини"] = moto_h
             try:
                 worksheet_to = get_or_create_worksheet_with_headers(workbook, TO, SHEETS.get(TO))
                 records_to = worksheet_to.get_all_records()
@@ -140,7 +140,7 @@ def get_statistic(chat_id: int):
     records_stat = worksheet_stat.get_all_records()
     last_row_stat = records_stat[-1]
 
-    total_moto_hours = sum([hm_to_minutes(i["Мото години"]) for i in records_stat if i["Мото години"]])
+    total_moto_hours = sum([hm_to_minutes(i["Мотогодини"]) for i in records_stat if i["Мотогодини"]])
 
     remaining = last_row_to["Залишок мотогодин"]  # скільки мотогодин залишилось
     bar_total = 10  # скільки "клітинок" у барі (довжина)
