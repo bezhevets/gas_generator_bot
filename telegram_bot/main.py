@@ -166,23 +166,23 @@ def stat(message):
 def grant_role(message):
     parts = (message.text or "").split()
 
-    if len(parts) != 4 or not parts[1].isdigit():
+    if len(parts) != 3 or not parts[1].isdigit():
         bot.reply_to(
-            message, f"Використання:\n/grant <user_id> <name> <role>\n Доступні ролі: {', '.join(sorted(VALID_ROLES))}"
+            message, f"Використання:\n/grant <user_id> <role>\n Доступні ролі: {', '.join(sorted(VALID_ROLES))}"
         )
         return
 
-    target_id = int(parts[1])
-    name = parts[2].strip().capitalize()
-    role = parts[3].strip().lower()
+    target_id = parts[1]
+    role = parts[2].strip().lower()
     if role not in VALID_ROLES:
         bot.reply_to(message, f"Невідома роль. Доступні: {', '.join(sorted(VALID_ROLES))}")
         return
 
     data = load_roles()
-    data[str(target_id)] = {"role": role, "name": name}
+    user = data.get(target_id)
+    user["role"] = role
     save_roles(data)
-    bot.reply_to(message, f"✅ Роль для {target_id}/{name} встановлено: {role}")
+    bot.reply_to(message, f"✅ Роль для {target_id} встановлено: {role}")
 
 
 @bot.message_handler(commands=["users"])
