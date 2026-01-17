@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 
+import pandas as pd
 import telebot
 from telebot import types
 
@@ -65,6 +66,7 @@ def get_help_text(message):
             help_text.extend(
                 [
                     "\nАдмін команди:\n",
+                    "/users - cписок юзерів\n",
                     "/grant - назначити роль юзеру",
                 ]
             )
@@ -181,6 +183,34 @@ def grant_role(message):
     data[str(target_id)] = {"role": role, "name": name}
     save_roles(data)
     bot.reply_to(message, f"✅ Роль для {target_id}/{name} встановлено: {role}")
+
+
+@bot.message_handler(commands=["users"])
+@require_role("admin")
+def list_users(message):
+    data = load_roles()
+    if not data:
+        bot.send_message(message.chat.id, "Поки що немає призначених ролей.")
+        return
+
+    lines = ["*Користувачі з ролями:*"]
+    for uid, value in data.items():
+        lines.append(f"- `{uid}` → {value.get('name')} → *{value.get('role')}*")
+
+    msg = "\n".join(lines)
+    if len(msg) > 3000:
+        data_to_df = []
+        for uid, value in data.items():
+            data_to_df.append([uid, value.get("name"), value.get("role")])
+        df = pd.DataFrame(data_to_df, columns=["id", "name", "role"])
+        df.to_excel("users.xlsx", index=False)
+        bot.send_document(
+            message.chat.id,
+            open("users.xlsx", "rb"),
+            caption="Повідомлення занадто довге, тому я надсилаю тобі його файлом.",
+        )
+        return
+    bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
 
 @bot.message_handler(func=lambda m: True, content_types=["text"])
