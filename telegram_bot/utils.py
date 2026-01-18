@@ -21,6 +21,8 @@ TO = "Течнічне обслуговування"
 
 def write_start_time(time_now: datetime) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
+    if not workbook:
+        return
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
 
     # Ensure we respect schema column order
@@ -82,6 +84,8 @@ def remaining_motor_hours(moto_hm: str, remaining_hours: str) -> str:
 
 def write_stop_time(time_now: datetime) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
+    if not workbook:
+        return
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
 
     records = worksheet.get_all_records()
@@ -112,6 +116,8 @@ def write_stop_time(time_now: datetime) -> None:
 
 def log_oil_change_time(today: datetime) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
+    if not workbook:
+        return
     worksheet = get_or_create_worksheet_with_headers(workbook, TO, SHEETS.get(TO))
     records = worksheet.get_all_records()
 
@@ -132,6 +138,8 @@ def get_statistic(chat_id: int) -> None:
     from telegram_bot.bot_instance import bot
 
     workbook = read_google_sheet(GOOGLE_SHEET)
+    if not workbook:
+        return
     worksheet_to = get_or_create_worksheet_with_headers(workbook, TO, SHEETS.get(TO))
     records_to = worksheet_to.get_all_records()
     last_row_to = records_to[-1]
