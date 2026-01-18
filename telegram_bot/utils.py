@@ -19,7 +19,7 @@ STAT = "Статистика"
 TO = "Течнічне обслуговування"
 
 
-def write_start_time(time_now: datetime) -> bool:
+def write_start_time(time_now: datetime) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
 
@@ -50,7 +50,7 @@ def write_start_time(time_now: datetime) -> bool:
     upload_dataframe_to_worksheet(worksheet, df)
 
 
-def moto_hours(data: dict):
+def moto_hours(data: dict) -> str:
     start = data.get("Час запуску")
     stop = data.get("Час стопу")
     if not start or not stop:
@@ -73,14 +73,14 @@ def hm_to_minutes(hm: str) -> int:
     return int(h) * 60 + int(m)
 
 
-def remaining_motor_hours(moto_hm: str, remaining_hours: str):
+def remaining_motor_hours(moto_hm: str, remaining_hours: str) -> str:
     new_remaining_minutes = hm_to_minutes(remaining_hours) - hm_to_minutes(moto_hm)
     total_minutes = max(0, new_remaining_minutes)
     h, m = divmod(total_minutes, 60)
     return f"{h}:{m:02d}"
 
 
-def write_stop_time(time_now: datetime) -> bool:
+def write_stop_time(time_now: datetime) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
 
@@ -110,7 +110,7 @@ def write_stop_time(time_now: datetime) -> bool:
     upload_dataframe_to_worksheet(worksheet, df)
 
 
-def log_oil_change_time(today: datetime):
+def log_oil_change_time(today: datetime) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
     worksheet = get_or_create_worksheet_with_headers(workbook, TO, SHEETS.get(TO))
     records = worksheet.get_all_records()
@@ -128,7 +128,7 @@ def log_oil_change_time(today: datetime):
     upload_dataframe_to_worksheet(worksheet, df)
 
 
-def get_statistic(chat_id: int):
+def get_statistic(chat_id: int) -> None:
     from telegram_bot.bot_instance import bot
 
     workbook = read_google_sheet(GOOGLE_SHEET)

@@ -12,20 +12,20 @@ app = Celery("celery_tasks", broker=os.getenv("CELERY_BROKER_URL"), backend=os.g
 
 
 @app.task(name="start_generator")
-def start_generator_task(start_time: datetime):
+def start_generator_task(start_time: datetime) -> None:
     return write_start_time(start_time)
 
 
 @app.task(name="stop_generator")
-def stop_generator_task(stop_time: datetime):
+def stop_generator_task(stop_time: datetime) -> None:
     return write_stop_time(stop_time)
 
 
 @app.task(name="change_oil")
-def change_oil_task(stop_time: datetime):
+def change_oil_task(stop_time: datetime) -> None:
     return log_oil_change_time(stop_time)
 
 
 @app.task(name="statistics")
-def statistics_task(chat_id):
+def statistics_task(chat_id) -> None:
     return get_statistic(chat_id)

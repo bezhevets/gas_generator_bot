@@ -19,7 +19,7 @@ from telegram_bot.permissions import (
 
 
 @bot.message_handler(commands=["myid"])
-def myid(message):
+def myid(message: telebot.types.Message) -> None:
     bot.reply_to(message, f"Ваш user_id: {message.from_user.id}")
 
 
@@ -41,7 +41,7 @@ def format_gen_message(action: str, time_now: datetime) -> str:
     return f"ℹ️ Подія генератора\n🕒 Час: {time_str}"
 
 
-def get_help_text(message):
+def get_help_text(message: telebot.types.Message) -> str:
     help_text = [
         "Доступні команди:\n",
         "/start - привітання\n",
@@ -76,7 +76,7 @@ def get_help_text(message):
 
 
 @bot.message_handler(commands=["start"])
-def send_welcome(message):
+def send_welcome(message: telebot.types.Message) -> None:
     user_id = message.from_user.id
     role = get_role_by_user_id(user_id)
 
@@ -102,18 +102,18 @@ def send_welcome(message):
 
 
 @bot.message_handler(commands=["help"])
-def send_help(message):
+def send_help(message: telebot.types.Message) -> None:
     bot.send_message(message.chat.id, get_help_text(message))
 
 
 @bot.message_handler(commands=["ping"])
-def ping(message):
+def ping(message: telebot.types.Message) -> None:
     bot.reply_to(message, "pong ✅")
 
 
 @bot.message_handler(commands=["start_generator"])
 @require_role("operator")
-def start_generator(message):
+def start_generator(message: telebot.types.Message) -> None:
     time_now = datetime.now()
     start_generator_task.delay(time_now)
     msg = format_gen_message("start", time_now)
@@ -122,7 +122,7 @@ def start_generator(message):
 
 @bot.message_handler(commands=["stop_generator"])
 @require_role("operator")
-def stop_generator(message):
+def stop_generator(message: telebot.types.Message) -> None:
     time_now = datetime.now()
     stop_generator_task.delay(time_now)
     msg = format_gen_message("stop", time_now)
@@ -131,7 +131,7 @@ def stop_generator(message):
 
 @bot.message_handler(commands=["change_oil"])
 @require_role("operator")
-def oil_change_time(message):
+def oil_change_time(message: telebot.types.Message) -> None:
     date_today = datetime.now()
     change_oil_task.delay(date_today)
     msg = f"✅ **Дату заміни мастила зафіксовано**\n📆 Дата: {date_today.strftime('%d.%m.%Y')}"
@@ -139,7 +139,7 @@ def oil_change_time(message):
 
 
 @bot.message_handler(commands=["info"])
-def info(message):
+def info(message: telebot.types.Message) -> None:
     contacts = json.loads(os.getenv("CONTACTS_JSON"))
     c_text = ""
     if contacts:
@@ -156,7 +156,7 @@ def info(message):
 
 
 @bot.message_handler(commands=["stat"])
-def stat(message):
+def stat(message: telebot.types.Message) -> None:
     msg = "Збираю дані з таблиці, протягом 1-2 хв я надішлю статистику."
     statistics_task.delay(message.chat.id)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
@@ -164,7 +164,7 @@ def stat(message):
 
 @bot.message_handler(commands=["grant"])
 @require_role("admin")
-def grant_role(message):
+def grant_role(message: telebot.types.Message) -> None:
     parts = (message.text or "").split()
 
     if len(parts) != 3 or not parts[1].isdigit():
@@ -188,7 +188,7 @@ def grant_role(message):
 
 @bot.message_handler(commands=["users"])
 @require_role("admin")
-def list_users(message):
+def list_users(message: telebot.types.Message) -> None:
     data = load_roles()
     if not data:
         bot.send_message(message.chat.id, "Поки що немає призначених ролей.")
@@ -216,7 +216,7 @@ def list_users(message):
 
 @bot.message_handler(commands=["revoke"])
 @require_role("admin")
-def revoke_role(message):
+def revoke_role(message: telebot.types.Message) -> None:
     parts = (message.text or "").split()
 
     if len(parts) != 2 or not parts[1].isdigit():
@@ -240,7 +240,7 @@ def revoke_role(message):
 
 
 @bot.message_handler(func=lambda m: True, content_types=["text"])
-def fallback(message):
+def fallback(message: telebot.types.Message) -> None:
     if message.text == "Допомога":
         send_help(message)
     elif message.text == "🟢START":

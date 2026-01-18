@@ -13,6 +13,9 @@ ROLES_FILE = "roles.json"
 # .env: ADMIN_ID=123456789
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
+if not ADMIN_ID:
+    raise RuntimeError("ADMIN_ID is not set in environment")
+
 ROLE_LEVEL = {"viewer": 0, "operator": 1, "admin": 2}
 VALID_ROLES = set(ROLE_LEVEL.keys())
 
