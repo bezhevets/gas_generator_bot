@@ -115,7 +115,7 @@ def ping(message: telebot.types.Message) -> None:
 @require_role("operator")
 def start_generator(message: telebot.types.Message) -> None:
     time_now = datetime.now()
-    start_generator_task.delay(time_now)
+    start_generator_task.delay(time_now, message.chat.id)
     msg = format_gen_message("start", time_now)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
@@ -124,7 +124,7 @@ def start_generator(message: telebot.types.Message) -> None:
 @require_role("operator")
 def stop_generator(message: telebot.types.Message) -> None:
     time_now = datetime.now()
-    stop_generator_task.delay(time_now)
+    stop_generator_task.delay(time_now, message.chat.id)
     msg = format_gen_message("stop", time_now)
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 
@@ -133,7 +133,7 @@ def stop_generator(message: telebot.types.Message) -> None:
 @require_role("operator")
 def oil_change_time(message: telebot.types.Message) -> None:
     date_today = datetime.now()
-    change_oil_task.delay(date_today)
+    change_oil_task.delay(date_today, message.chat.id)
     msg = f"✅ **Дату заміни мастила зафіксовано**\n📆 Дата: {date_today.strftime('%d.%m.%Y')}"
     bot.send_message(message.chat.id, msg, parse_mode="Markdown")
 

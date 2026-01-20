@@ -10,6 +10,7 @@ from gsheets.sheets_service import (
     get_or_create_worksheet_with_headers,
 )
 from gsheets.schema import SHEETS
+from telegram_bot.bot_instance import bot
 
 load_dotenv()
 
@@ -19,7 +20,7 @@ STAT = "Статистика"
 TO = "Течнічне обслуговування"
 
 
-def write_start_time(time_now: datetime) -> None:
+def write_start_time(time_now: datetime, chat_id: int) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
     if not workbook:
         return
@@ -50,6 +51,9 @@ def write_start_time(time_now: datetime) -> None:
 
     df = pd.DataFrame(records)
     upload_dataframe_to_worksheet(worksheet, df)
+
+    msg = "✅ Запис додано"
+    bot.send_message(chat_id, msg, parse_mode="Markdown")
 
 
 def moto_hours(data: dict) -> str:
@@ -82,13 +86,13 @@ def remaining_motor_hours(moto_hm: str, remaining_hours: str) -> str:
     return f"{h}:{m:02d}"
 
 
-def write_stop_time(time_now: datetime) -> None:
+def write_stop_time(time_now: datetime, chat_id: int) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
     if not workbook:
         return
     worksheet = get_or_create_worksheet_with_headers(workbook, STAT, SHEETS.get(STAT))
-
     records = worksheet.get_all_records()
+
     if records:
         last_row = records[-1]
         if not last_row.get("Час стопу"):
@@ -99,7 +103,7 @@ def write_stop_time(time_now: datetime) -> None:
                 worksheet_to = get_or_create_worksheet_with_headers(workbook, TO, SHEETS.get(TO))
                 records_to = worksheet_to.get_all_records()
                 if not records_to:
-                    log_oil_change_time(time_now)
+                    log_oil_change_time(time_now, chat_id)
                     worksheet_to = get_or_create_worksheet_with_headers(workbook, TO, SHEETS.get(TO))
                     records_to = worksheet_to.get_all_records()
 
@@ -107,14 +111,22 @@ def write_stop_time(time_now: datetime) -> None:
                 last_row_to["Залишок мотогодин"] = remaining_motor_hours(moto_h, last_row_to["Залишок мотогодин"])
                 df_to = pd.DataFrame(records_to)
                 upload_dataframe_to_worksheet(worksheet_to, df_to)
+                msg = f"✅ Запис додано\nПрацював: *{moto_h}*"
             except Exception as e:
                 print(f"Error get remaining_motor_hours: {e}")
+                msg = f"Сталась помилка: {e}"
+        else:
+            msg = "Останній запис уже містить час зупинки"
+    else:
+        msg = "Не отримано даних з таблиці"
 
     df = pd.DataFrame(records)
     upload_dataframe_to_worksheet(worksheet, df)
 
+    bot.send_message(chat_id, msg, parse_mode="Markdown")
 
-def log_oil_change_time(today: datetime) -> None:
+
+def log_oil_change_time(today: datetime, chat_id: int) -> None:
     workbook = read_google_sheet(GOOGLE_SHEET)
     if not workbook:
         return
@@ -132,11 +144,11 @@ def log_oil_change_time(today: datetime) -> None:
 
     df = pd.DataFrame(records)
     upload_dataframe_to_worksheet(worksheet, df)
+    msg = "✅ Запис додано"
+    bot.send_message(chat_id, msg, parse_mode="Markdown")
 
 
 def get_statistic(chat_id: int) -> None:
-    from telegram_bot.bot_instance import bot
-
     workbook = read_google_sheet(GOOGLE_SHEET)
     if not workbook:
         return
