@@ -39,7 +39,7 @@ services:
       --pattern="*.py"
       --recursive
       --signal=SIGINT --
-      celery -A celery_tasks worker -n gbot --loglevel=info
+      celery -A celery_tasks worker -n gbot -l INFO -Q gasgen
     env_file:
       - .env
     environment:
