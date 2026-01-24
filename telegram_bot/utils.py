@@ -108,7 +108,9 @@ def write_stop_time(time_now: datetime, chat_id: int) -> None:
                     records_to = worksheet_to.get_all_records()
 
                 last_row_to = records_to[-1]
-                last_row_to["Залишок мотогодин"] = remaining_motor_hours(moto_h, last_row_to["Залишок мотогодин"])
+                last_row_to["Залишок мотогодин"] = remaining_motor_hours(
+                    moto_h, last_row_to.get("Залишок мотогодин", "00:00")
+                )
                 df_to = pd.DataFrame(records_to)
                 upload_dataframe_to_worksheet(worksheet_to, df_to)
                 msg = f"✅ Запис додано\nПрацював: *{moto_h}*"
@@ -160,9 +162,9 @@ def get_statistic(chat_id: int) -> None:
     records_stat = worksheet_stat.get_all_records()
     last_row_stat = records_stat[-1]
 
-    total_moto_hours = sum([hm_to_minutes(i["Мотогодини"]) for i in records_stat if i["Мотогодини"]])
+    total_moto_hours = sum([hm_to_minutes(i["Мотогодини"]) for i in records_stat if i.get("Мотогодини")])
 
-    remaining = last_row_to["Залишок мотогодин"]  # скільки мотогодин залишилось
+    remaining = last_row_to.get("Залишок мотогодин", 0)  # скільки мотогодин залишилось
     bar_total = 10  # скільки "клітинок" у барі (довжина)
     interval = int(os.getenv("OIL_INTERVAL"))  # інтервал заміни в мотогодинах
     used = interval - int(remaining.strip().split(":")[0])
@@ -171,13 +173,18 @@ def get_statistic(chat_id: int) -> None:
 
     msg = (
         "📊 *Статистика генератора*\n\n"
-        "🧰 *Заміна мастила*\n"
+        f"🧰 *Заміна мастила (раз в {interval} мг)*\n"
         f"{bar}\n"
         f"Залишилось: *{remaining}* мотогодин\n\n"
         f"🛢️ *Остання заміна масла:* {last_row_to['Дата']}\n"
         f"🛢️ *Всього замін масла:* {len(records_to)}\n\n"
-        f"🚀 *Останній запуск:* {last_row_stat['Час запуску']}\n"
-        f"🔁 *Усього запусків:* {len(records_stat)}\n"
-        f"⏱️ *Всього мотогодин:* {total_moto_hours // 60} год.\n"
+        f"🚀 *Останній запуск:* {last_row_stat.get('Час запуску', '-Не зафіксовано-')}\n"
     )
+    last_stop = last_row_stat.get("Час стопу")
+    if last_stop:
+        msg += (
+            f"🏁 *Останній стоп:* {last_stop}\n"
+            f"⏱️ *Час роботи:* {last_row_stat.get('Мотогодини', '-Не зафіксовано-')}\n\n"
+        )
+    msg += f"🔁 *Усього запусків:* {len(records_stat)}\n" f"⏱️ *Всього мотогодин:* {total_moto_hours // 60} год.\n"
     bot.send_message(chat_id, msg, parse_mode="Markdown")
