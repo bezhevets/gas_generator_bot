@@ -31,6 +31,7 @@ def load_roles() -> dict:
         return {}
 
 
+# TODO: перероби функцію
 def save_roles(data: dict) -> None:
     tmp = ROLES_FILE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
